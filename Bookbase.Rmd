@@ -1,0 +1,325 @@
+---
+title: "TBR Database"
+author: "Megan Romero"
+date: "2024-11-17"
+output: html_document
+---
+## Introduction
+
+Welcome to my ever-growing pile of crazy, stupid, and/or ridiculous stories I will probably never read. This is a showcase of my TBR (To Be Read) list—a collection of books that I have impulsively plucked off the shelves of the internet and have thrown into this magnificent database. Wherein, I might finally be able to make some sense of my own brain by analyzing the trends and truths of my horrible taste. I bring you exactly this in the following report.
+
+*"What does my TBR say about me?"* Self-centered question, I know— but this is the database I've got. I'll be using measures like location, time period, tropes, genres and more to create graphs and answer questions which can show not only the trends over time when it comes to my preference, but the preferences of the publishing industry at large.
+
+[link to romance.io](https://www.romance.io/)
+
+#### Packages & Prep
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(echo = F)
+library(tidyverse)
+library(dplyr)
+library(maps)
+library(knitr)
+library(tidyr)
+library(ggplot2)
+library(ggrepel)
+library(ggforce)
+library(packcircles)
+library(scales)
+library(lubridate)
+library(timevis)
+```
+
+This absolute monster of a database was created and curated by me, with the help of the greatest website ever made (and it's wonderful user base), romance.io— created by Silke. Using it's one-of-a-kind tagging system.
+Information on every book is crowd sourced. So those who've read a specific book can go to that book's page on the website and tag any trope that they feel fits. You can upvote and downvote the tags other's have left!
+Of course, due to the nature of crowd sourcing information, not every book will be entirely accurate in it's tags, and books that are less popular or are very old are much more likely to be missing tags or other information.
+
+```{r, echo = T}
+Bookbase <- read.csv("~/Documents/Data Science Files/TBR Database Final Version.csv")
+```
+
+```{r}
+Condensed_Glimpse <- Bookbase %>%
+  select(Title, Author, Series, Romance.io.Rating, X..of.Ratings, X..of.Reviews, Release.Date, Page.Count)
+glimpse(Condensed_Glimpse)
+
+```
+
+
+```{r, echo = F}
+Time_Period = Bookbase %>% 
+  select("Contemporary",	"Futuristic",	"Historical",	"Ancient.Times",	"Medieval",	"Tudors...Stuarts",	"Georgian",	"Regency",	"Victorian",	"Western.Frontier",	"American.Civil.War",	"X20th.Century")
+
+Genre = Bookbase %>% 
+  select("Dark.Romance",	"Young.Adult",	"New.Adult",	"Mystery",	"Suspense",	"Dystopian",	"Funny",	"Angst",	"Horror",	"Fantasy",	"High.Fantasy",	"Urban.Fantasy",	"Steampunk",	"Paranormal",	"Magic",	"Time.Travel",	"Angels",	"Demons",	"Fae",	"Monsters",	"Shapeshifters",	"Werewolves",	"Dragon.Shifter",	"Bear.Shifter",	"Lion.Shifter",	"Tiger.Shifter",	"Vampires",	"Witches",	"Science.Fiction",	"Aliens")
+
+Relationship = Bookbase %>% 
+  select("M.F.Romance",	"Gay.Romance",	"Lesbian.Romance",	"Non.Binary.Romance",	"Older.Mature",	"Childfree",	"Queer.Romance",	"Queer.Awakening",	"Bisexuality",	"Age.Gap",	"Boss...Employee",	"Class.Difference",	"Grumpy...Sunshine",	"Height.Difference",	"Multicultural",	"Arranged.Forced.Marriage",	"Caretaking",	"Enemies.To.Lovers",	"Fake.Relationship",	"Fated.Mates",	"Forbidden.Love",	"Forced.Proximity",	"Friends.To.Lovers",	"Good.Grovel",	"Hurt.Comfort",	"Insta.Love",	"Marriage.Of.Convenience",	"Other.Man.Woman",	"Love.Triangle",	"Cheating",	"Pregnancy",	"Second.Chances",	"Secret.Child",	"Secret.Relationship",	"Sibling.s.Best.Friend",	"Slow.Burn")
+
+Story = Bookbase %>% 
+  select("Abduction",	"Betrayal",	"Christmas",	"Disabilities...Scars",	"Found.Family",	"Mafia",	"Military",	"Neurodivergent.MC",	"Political.Court.Ingtrigue",	"Slavery",	"Superheroes",	"Survival",	"Vengeance",	"War",	"Black.MC",	"African.American",	"BW.WM",	"East.Asian.MC",	"Indigenous.MC",	"Latinx.MC",	"South.Asian.Desi",	"Southeast.Asian.MC",	"Amish",	"Buddhist",	"Christian",	"Hindu",	"Jewish",	"Muslim",	"Pagan",	"Sports",	"Baseball",	"Basketball",	"Fighting.MMA.Boxing",	"Football",	"Hockey",	"Ice.Figure.Skating",	"Soccer")
+
+USA_States <- Bookbase %>% 
+  select("Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", 
+        "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", 
+        "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", 
+        "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", 
+        "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New.Hampshire", 
+        "New.Jersey", "New.Mexico", "New.York.State", "North.Carolina", "North.Dakota", 
+        "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode.Island", 
+        "South.Carolina", "South.Dakota", "Tennessee", "Texas", "Utah", 
+        "Vermont", "Virginia", "Washington.D.C.", "Washington.State", "West.Virginia", "Wisconsin", 
+        "Wyoming")
+Location = Bookbase %>%
+    select("Highschool",	"College",	"Workplace.Office",	"Small.Town",	"Western", "Africa",	"Northern.Africa",	"Morocco",	"Eastern.Africa",	"Djibouti",	"Somalia",	"Asia",	"Central.Asia",	"East.Asia",	"South.Asia",	"Southeast.Asia",	"Western.Asia",	"Isreal",	"Jordan",	"Palestine",	"North.America",	"Caribbean",	"Bahamas",	"Jamaica",	"Central.America",	"Costa.Rica",	"Canada",	"Mexico",	"USA", "South.America",	"Argentina",	"Colombia",	"Peru",	"Europe",	"Ireland",	"United.Kingdom",	"England",	"Northern.Ireland",	"Scotland",	"Wales",	"Western...Central.Europe",	"Belgium",	"France",	"Germany",	"Hungary",	"Netherlands",	"Switzerland",	"Scandinavia",	"Norway",	"Sweden",	"Southern.Europe",	"Italy",	"Spain",	"South.East.Europe",	"Greece",	"Kosovo",	"Romania",	"Serbia",	"Eastern.Europe",	"Belarus",	"Russia",	"Oceania",	"Australia",	"New.Zealand")
+
+Heroine = Bookbase %>% 
+  select("Cheerful.Happy.Heroine",	"Competent.Heroine",	"Female.Rake",	"Grumpy.Ice.Queen",	"Independent.Heroine",	"Sassy.Heroine",	"Shy.Heroine",	"Sweet.Gentle.Heroine",	"Take.Charge.Heroine",	"Dangerous.Heroine",	"Gifted.Super.Heroine",	"Non.Human.Heroine",	"Poor.Heroine",	"Rich.Heroine",	"Single.Mother",	"Tortured.Heroine",	"Trans.Heroine",	"Curvy.Heroine",	"Plain.Heroine",	"Tall.Heroine",	"Aristo.Royal.Heroine",	"Athlete.Heroine",	"Bodyguard.Protector.Heroine", "Famous.Heroine",	"Criminal.Heroine",	"Sleuth.Heroine",	"Teacher.Coach.Heroine",	"Warrior.Heroine",	"White.Collar.Heroine",	"Working.Class.Heroine")
+
+Hero = Bookbase %>% 
+  select("Bad.Boys",	"Cruel.Hero.Bully",	"Grumpy.Cold.Hero",	"Himbo",	"Nerdy.Hero",	"Possessive.Hero",	"Shy.Hero",	"Sunny.Happy.Hero",	"Sweet.Gentle.Hero",	"Non.Human.Hero",	"Rich.Hero",	"Single.Father",	"Tortured.Hero",	"Trans.Hero",	"Dad.Bod.Hero",	"Short.King",	"Actor.Hero",	"Athlete.Hero",	"Biker.Hero",	"Bodyguard.Protector.Hero",	"CEO.Tycoon.Hero",	"Cowboy.Hero",	"Fighter.Hero",	"Men.in.Uniform",	"Pirate.Hero",	"Politician.Hero",	"Rockstar.Hero",	"Teacher.Coach.Hero",	"Warlord.Commander.Hero",	"Working.Class.Hero",	"Highlander.Hero",	"Royal.Hero",	"Sheik",	"Viking.Hero")
+
+Content_Warnings = Bookbase %>% 
+  select("No.HEA",	"Nontraditional.HEA",	"Ableism",	"Animal.Abuse",	"Animal.Death",	"Eating.Disorders",	"Fatphobia",	"Gambling",	"Graphic.Violence",	"Human.Trafficking",	"Mental.Illness",	"Mental.Trauma",	"Miscarriage.Infertility",	"Misogyny",	"Queerphobia",	"Racism",	"Religious.Trauma",	"Self.Harm",	"Suicide.Ideation",	"Terminal.Illness",	"Torture.of.MCs",	"Torture.of.Side.Characters",	"Victim.Blaming",	"Abuse",	"Abuse.Between.MCs",	"Third.Party.Abuse",	"Past.Abuse",	"Past.Child.Abuse",	"Past.Child.Neglect",	"Death.Grief",	"Child.Death",	"Substance.Abuse",	"Alcoholism",	"Drug.Abuse")
+
+Format = Bookbase %>% 
+  select("Male.POV",	"Dual.POV",	"First.Person.POV",	"Third.Person.POV")
+```
+##### <ins>These are the tags available to all romance.io users to categorize any book!</ins>
+```{r create-summary, echo=FALSE}
+library(knitr)
+
+Time_Period_Tags <- paste(
+  colnames(Bookbase %>% 
+             select("Contemporary", "Futuristic", "Historical", "Ancient.Times", "Medieval", "Tudors...Stuarts", "Georgian", "Regency", "Victorian", "Western.Frontier", "American.Civil.War", "X20th.Century")),
+  collapse = ", "
+)
+
+Genre_Tags <- paste(
+  colnames(Bookbase %>% 
+             select("Dark.Romance",	"Young.Adult",	"New.Adult",	"Mystery",	"Suspense",	"Dystopian",	"Funny",	"Angst",	"Horror",	"Fantasy",	"High.Fantasy",	"Urban.Fantasy",	"Steampunk",	"Paranormal",	"Magic",	"Time.Travel",	"Angels",	"Demons",	"Fae",	"Monsters",	"Shapeshifters",	"Werewolves",	"Dragon.Shifter",	"Bear.Shifter",	"Lion.Shifter",	"Tiger.Shifter",	"Vampires",	"Witches",	"Science.Fiction",	"Aliens")),
+  collapse = ", "
+)
+
+Relationship_Tags <- paste(
+  colnames(Bookbase %>% 
+             select("M.F.Romance",	"Gay.Romance",	"Lesbian.Romance",	"Non.Binary.Romance",	"Older.Mature",	"Childfree",	"Queer.Romance",	"Queer.Awakening",	"Bisexuality",	"Age.Gap",	"Boss...Employee",	"Class.Difference",	"Grumpy...Sunshine",	"Height.Difference",	"Multicultural",	"Arranged.Forced.Marriage",	"Caretaking",	"Enemies.To.Lovers",	"Fake.Relationship",	"Fated.Mates",	"Forbidden.Love",	"Forced.Proximity",	"Friends.To.Lovers",	"Good.Grovel",	"Hurt.Comfort",	"Insta.Love",	"Marriage.Of.Convenience",	"Other.Man.Woman",	"Love.Triangle",	"Cheating",	"Pregnancy",	"Second.Chances",	"Secret.Child",	"Secret.Relationship",	"Sibling.s.Best.Friend",	"Slow.Burn")),
+  collapse = ", "
+)
+
+Tag_Summary <- data.frame(
+  Category = c("Time Period", "Genre", "Relationship"),
+  Tags = c(Time_Period_Tags, Genre_Tags, Relationship_Tags)
+)
+# Display tag summary
+kable(Tag_Summary, col.names = c("Category", "Tags"))
+```
+
+Now that we've established our data, let's dive into some stats 👹
+```{r, echo = F}
+Hero[[1]] <- as.integer(Hero[[1]])
+```
+Pie chart genres?
+
+```{r, echo = F}
+top_heroine_tags <- Hero %>%
+  summarise(across(everything(), sum, na.rm = TRUE)) %>% 
+  pivot_longer(cols = everything(), names_to = "Tag", values_to = "Count") %>% 
+  arrange(desc(Count)) %>% 
+  slice_head(n = 5) 
+
+print(top_heroine_tags)
+```
+
+
+```{r}
+df <- data.frame(
+  mostpopulartags = c("Contemporary", "Historical",	"Futuristic",	"Regency", "Victorian", 
+                      "Fantasy", "Suspense", "Dark.Romance", "Paranormal", "New.Adult", 
+                      "Enemies.To.Lovers", "Forced.Proximity", "M.F.Romance", "Age.Gap", 
+                      "Pregnancy", "Abduction", "Disabilities...Scars", "Mafia", "Vengeance", 
+                      "Military", "Take.Charge.Heroine", "Tortured.Heroine", "Sassy.Heroine", 
+                      "Competent.Heroine", "Independent.Heroine", "Possessive.Hero", 
+                      "Tortured.Hero", "Rich.Hero", "Grumpy.Cold.Hero", "Non.Human.Hero"),
+  values = c(8045, 3604, 1607, 1385, 779, 4876, 4038, 4037, 3935, 3034, 4802, 3720, 
+             3311, 2767, 2148, 2370, 1753, 1682, 1393, 1281, 4157, 2471, 2111, 2059, 
+             1870, 5295, 3731, 3067, 2881, 1967),
+  Category = c("Time_Period", "Time_Period", "Time_Period", "Time_Period", "Time_Period", 
+               "Genre", "Genre", "Genre", "Genre", "Genre", 
+               "Relationship", "Relationship", "Relationship", "Relationship", "Story", 
+               "Story", "Story", "Story", "Story", "Story", 
+               "Heroine", "Heroine", "Heroine", "Heroine", "Heroine", 
+               "Hero", "Hero", "Hero", "Hero", "Hero")
+)
+
+
+df$packing <- circleProgressiveLayout(df$values, sizetype='area')
+
+df.gg <- circleLayoutVertices(df$packing, npoints=50)
+
+category_colors <- c(
+  "Time_Period" = "#FF9999", "Genre" = "#FFCC99", 
+  "Relationship" = "#FFFF99", "Story" = "#99CCFF", 
+  "Heroine" = "#99FF99", "Hero" = "#CC99FF"
+)
+
+ggplot() + 
+  geom_polygon(data = df.gg, aes(x, y, group = id, fill=df$Category[id]), alpha = 0.6)+
+  scale_fill_manual(values = category_colors)+
+  geom_text(data = df, aes(x=packing$x, y=packing$y, label = mostpopulartags), size=2.5, color="black", vjust = -0.5) +
+  theme_void() + 
+  theme(legend.position="right", plot.margin=unit(c(0,0,0,0),"cm") ) + 
+  coord_equal()+
+  guides(fill = guide_legend(title = "Categories"))
+```
+Distribution of occupations
+```{r}
+hero_columns <- c("Actor.Hero", "Bodyguard.Protector.Hero", "CEO.Tycoon.Hero", "Cowboy.Hero", "Fighter.Hero", "Pirate.Hero", "Politician.Hero", "Rockstar.Hero", "Teacher.Coach.Hero", "Warlord.Commander.Hero", "Working.Class.Hero", "Royal.Hero", "Sheik")
+heroine_columns <- c("Aristo.Royal.Heroine", "Athlete.Heroine", "Bodyguard.Protector.Heroine", "Famous.Heroine", "Criminal.Heroine", "Sleuth.Heroine", "Teacher.Coach.Heroine", "Warrior.Heroine", "White.Collar.Heroine", "Working.Class.Heroine")
+
+hero_tags <- colSums(Bookbase[hero_columns], na.rm = TRUE)
+hero_data <- data.frame(
+  Occupation = names(hero_tags),
+  Count = hero_tags,
+  Gender = "Hero"
+)
+
+heroine_tags <- colSums(Bookbase[heroine_columns], na.rm = TRUE)
+heroine_data <- data.frame(
+  Occupation = names(heroine_tags),
+  Count = heroine_tags,
+  Gender = "Heroine"
+)
+
+occupation_data <- rbind(hero_data, heroine_data)
+
+ggplot(occupation_data, aes(x = Gender, y = Count, fill = Occupation)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(
+    title = "Hero and Heroine Occupation Tags",
+    x = "Gender",
+    y = "Number of Tags",
+    fill = "Occupation"
+  ) +
+  theme_minimal()
+```
+```{r}
+hero_personality_columns <- c("Bad.Boys", "Cruel.Hero.Bully", "Grumpy.Cold.Hero", "Himbo", "Nerdy.Hero", "Possessive.Hero", "Shy.Hero", "Sunny.Happy.Hero", "Sweet.Gentle.Hero", "Tortured.Hero")
+heroine_personality_columns <- c("Cheerful.Happy.Heroine", "Competent.Heroine", "Female.Rake", "Grumpy.Ice.Queen", "Independent.Heroine", "Sassy.Heroine", "Shy.Heroine", "Sweet.Gentle.Heroine", "Take.Charge.Heroine", "Dangerous.Heroine", "Tortured.Heroine")
+
+
+Bookbase[hero_personality_columns] <- lapply(Bookbase[hero_personality_columns], as.numeric)
+Bookbase[heroine_personality_columns] <- lapply(Bookbase[heroine_personality_columns], as.numeric)
+
+hero_ptags <- colSums(Bookbase[hero_personality_columns], na.rm = TRUE)
+hero_pdata <- data.frame(
+  Personality = names(hero_ptags),
+  Count = hero_ptags,
+  Gender = "Hero"
+)
+
+heroine_ptags <- colSums(Bookbase[heroine_personality_columns], na.rm = TRUE)
+heroine_pdata <- data.frame(
+  Personality = names(heroine_ptags),
+  Count = heroine_ptags,
+  Gender = "Heroine"
+)
+
+personality_data <- rbind(hero_pdata, heroine_pdata)
+
+ggplot(personality_data, aes(x = Gender, y = Count, fill = Personality)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(
+    title = "Hero and Heroine Personality Tags",
+    x = "Gender",
+    y = "Number of Tags",
+    fill = "Personality"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+author_counts <- as.data.frame(table(Bookbase$Author))
+
+colnames(author_counts) <- c("Author", "Count")
+
+frequent_authors <- author_counts[author_counts$Count >= 7, ]
+
+ggplot(frequent_authors, aes(x = Author, y = Count)) +
+  geom_dotplot(binaxis = "y", stackdir = "center", dotsize = 0.8) +
+  labs(
+    title = "Frequency of Authors with 7+ Books",
+    x = "Authors",
+    y = "Number of Books"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 8) 
+  )
+```
+
+```{r}
+book_timeline <- Bookbase %>%
+  group_by(Release.Year) %>%
+  summarise(Book.Count = n()) %>%
+  arrange(Release.Year)
+
+ggplot(book_timeline, aes(x = Release.Year, y = Book.Count)) +
+  geom_line(color = "blue", size = 1) +
+  labs(
+    title = "Timeline of Books Published",
+    x = "Year",
+    y = "Number of Books Published"
+  ) +
+  theme_minimal() +
+  scale_x_continuous(
+    breaks = seq(min(book_timeline$Release.Year), max(book_timeline$Release.Year), by = 5) 
+  )
+```
+
+```{r}
+Bookbase[14:345] <- lapply(Bookbase[14:345], function(x) as.integer(as.character(x)))
+```
+
+
+```{r}
+Bookbase$Total.Tags <- rowSums(Bookbase[, 14:334], na.rm = TRUE)
+
+Bookbase <- Bookbase[is.finite(Bookbase$Total.Tags), ]
+
+ggplot(Bookbase, aes(x = Release.Year, y = Total.Tags)) +
+  geom_point(alpha = 0.6, color = "blue") +
+  labs(
+    title = "Correlation Between Year Published and Total Tags",
+    x = "Year Published",
+    y = "Total Tags"
+  ) +
+  theme_minimal() +
+  scale_x_continuous(
+    breaks = seq(min(Bookbase$Release.Year, na.rm = TRUE), max(Bookbase$Release.Year, na.rm = TRUE), by = 5)
+  ) +
+  scale_y_continuous(
+    breaks = seq(0, max(Bookbase$Total.Tags, na.rm = TRUE), by = 150)
+  )
+```
+
+```{r}
+Bookbase_read <- data.frame(
+  Title = c("Under Her Skin", "Beyond the Next Star", "Tame the Heart", "Twisted Games", "Beyond the Faerie Gate", "Across an Endless Sea", "Amidst the Insidious Courts", "Redacted 1", "Beneath a Shattered Sky", "Between Love and Loathing", "Monsters", "Dearest Rogue", "Redacted 2", "The Wraith King", "Forbidden: Part One"),
+  Date.Started = as.Date(c("2024-03-18", "2024-03-21", "2024-05-20", "2024-06-20", "2024-07-04", "2024-07-07", "2024-07-12", "2024-07-19", "2024-07-23", "2024-08-05", "2024-09-01", "2024-09-08", "2024-09-16", "2024-09-28", "2024-10-19")),
+  Date.Finished = as.Date(c("2024-03-21", "2024-03-25", "2024-06-20", "2024-07-04", "2024-07-07", "2024-07-12", "2024-07-18", "2024-07-21", "2024-08-05", "2024-08-31", "2024-09-08", "2024-09-16", "2024-09-26", "2024-10-18", "2024-11-04"))
+)
+
+ggplot(Bookbase_read, aes(y = Title)) +
+  geom_segment(aes(x = Date.Started, xend = Date.Finished, y = Title, yend = Title), size = 2, color = "blue") +
+  labs(
+    title = "Reading Timeline",
+    x = "Date",
+    y = "Book"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 10),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+```
+
