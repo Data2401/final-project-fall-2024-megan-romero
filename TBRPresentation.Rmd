@@ -1,0 +1,695 @@
+---
+title: "Megan's Semi-Questionable TBR Deep Dive"
+author: "✨Megan Romero✨"
+output:
+  slidy_presentation:
+    highlight: espresso
+    css: custom.css
+  powerpoint_presentation: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(dplyr)
+library(maps)
+library(knitr)
+library(tidyr)
+library(ggplot2)
+library(ggrepel)
+library(ggforce)
+library(packcircles)
+library(scales)
+library(lubridate)
+library(timevis)
+```
+
+# Introduction
+
+![Bert is me](bookgif.gif)
+← me btw 💕
+
+
+- TBR = (To Be Read)
+- What does the data say about the book community at large?
+
+- What does the data say about me?
+
+- Does the data prediction hold up?
+
+
+# ✨The Data✨
+
+- This dataset brought to you by [romance.io](https://www.romance.io/)
+
+- This dataset also brought to you by **ME**.💅🎀
+
+- This dataset *also* brought to you by people who don't know how to tag.💀
+
+- Featuring, books that are super old and also books that nobody knows about.
+
+# <span style="font-size: 24px;">(The Data pt. 2)</span>
+
+![](hustle.gif)
+this is me trying to finish this on time btw💕
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, class.output="glimpse"}
+Bookbase <- read.csv("~/Documents/Data Science Files/TBR Database Final Version.csv")
+library(dplyr)
+Condensed_Glimpse <- Bookbase %>%
+  select(Title, Author, Series, Romance.io.Rating, X..of.Ratings, X..of.Reviews, Release.Date, Page.Count)
+glimpse(Condensed_Glimpse)
+```
+
+# *ALLLLL* the Tags~~~ <span style="font-size: 24px;">(not rlly)</span>
+
+- Presenting, the top 3 tags in every category:
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+Time_Period = Bookbase %>% 
+  select("Contemporary",	"Futuristic",	"Historical",	"Ancient.Times",	"Medieval",	"Tudors...Stuarts",	"Georgian",	"Regency",	"Victorian",	"Western.Frontier",	"American.Civil.War",	"X20th.Century")
+
+Genre = Bookbase %>% 
+  select("Dark.Romance",	"Young.Adult",	"New.Adult",	"Mystery",	"Suspense",	"Dystopian",	"Funny",	"Angst",	"Horror",	"Fantasy",	"High.Fantasy",	"Urban.Fantasy",	"Steampunk",	"Paranormal",	"Magic",	"Time.Travel",	"Angels",	"Demons",	"Fae",	"Monsters",	"Shapeshifters",	"Werewolves",	"Dragon.Shifter",	"Bear.Shifter",	"Lion.Shifter",	"Tiger.Shifter",	"Vampires",	"Witches",	"Science.Fiction",	"Aliens")
+
+Relationship = Bookbase %>% 
+  select("M.F.Romance",	"Gay.Romance",	"Lesbian.Romance",	"Non.Binary.Romance",	"Older.Mature",	"Childfree",	"Queer.Romance",	"Queer.Awakening",	"Bisexuality",	"Age.Gap",	"Boss...Employee",	"Class.Difference",	"Grumpy...Sunshine",	"Height.Difference",	"Multicultural",	"Arranged.Forced.Marriage",	"Caretaking",	"Enemies.To.Lovers",	"Fake.Relationship",	"Fated.Mates",	"Forbidden.Love",	"Forced.Proximity",	"Friends.To.Lovers",	"Good.Grovel",	"Hurt.Comfort",	"Insta.Love",	"Marriage.Of.Convenience",	"Other.Man.Woman",	"Love.Triangle",	"Cheating",	"Pregnancy",	"Second.Chances",	"Secret.Child",	"Secret.Relationship",	"Sibling.s.Best.Friend",	"Slow.Burn")
+
+Story = Bookbase %>% 
+  select("Abduction",	"Betrayal",	"Christmas",	"Disabilities...Scars",	"Found.Family",	"Mafia",	"Military",	"Neurodivergent.MC",	"Political.Court.Ingtrigue",	"Slavery",	"Superheroes",	"Survival",	"Vengeance",	"War",	"Black.MC",	"African.American",	"BW.WM",	"East.Asian.MC",	"Indigenous.MC",	"Latinx.MC",	"South.Asian.Desi",	"Southeast.Asian.MC",	"Amish",	"Buddhist",	"Christian",	"Hindu",	"Jewish",	"Muslim",	"Pagan",	"Sports",	"Baseball",	"Basketball",	"Fighting.MMA.Boxing",	"Football",	"Hockey",	"Ice.Figure.Skating",	"Soccer")
+
+USA_States <- Bookbase %>% 
+  select("Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", 
+        "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", 
+        "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", 
+        "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", 
+        "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New.Hampshire", 
+        "New.Jersey", "New.Mexico", "New.York.State", "North.Carolina", "North.Dakota", 
+        "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode.Island", 
+        "South.Carolina", "South.Dakota", "Tennessee", "Texas", "Utah", 
+        "Vermont", "Virginia", "Washington.D.C.", "Washington.State", "West.Virginia", "Wisconsin", 
+        "Wyoming")
+Location = Bookbase %>%
+    select("Highschool",	"College",	"Workplace.Office",	"Small.Town",	"Western", "Africa",	"Northern.Africa",	"Morocco",	"Eastern.Africa",	"Djibouti",	"Somalia",	"Asia",	"Central.Asia",	"East.Asia",	"South.Asia",	"Southeast.Asia",	"Western.Asia",	"Isreal",	"Jordan",	"Palestine",	"North.America",	"Caribbean",	"Bahamas",	"Jamaica",	"Central.America",	"Costa.Rica",	"Canada",	"Mexico",	"USA", "South.America",	"Argentina",	"Colombia",	"Peru",	"Europe",	"Ireland",	"United.Kingdom",	"England",	"Northern.Ireland",	"Scotland",	"Wales",	"Western...Central.Europe",	"Belgium",	"France",	"Germany",	"Hungary",	"Netherlands",	"Switzerland",	"Scandinavia",	"Norway",	"Sweden",	"Southern.Europe",	"Italy",	"Spain",	"South.East.Europe",	"Greece",	"Kosovo",	"Romania",	"Serbia",	"Eastern.Europe",	"Belarus",	"Russia",	"Oceania",	"Australia",	"New.Zealand")
+
+Heroine = Bookbase %>% 
+  select("Cheerful.Happy.Heroine",	"Competent.Heroine",	"Female.Rake",	"Grumpy.Ice.Queen",	"Independent.Heroine",	"Sassy.Heroine",	"Shy.Heroine",	"Sweet.Gentle.Heroine",	"Take.Charge.Heroine",	"Dangerous.Heroine",	"Gifted.Super.Heroine",	"Non.Human.Heroine",	"Poor.Heroine",	"Rich.Heroine",	"Single.Mother",	"Tortured.Heroine",	"Trans.Heroine",	"Curvy.Heroine",	"Plain.Heroine",	"Tall.Heroine",	"Aristo.Royal.Heroine",	"Athlete.Heroine",	"Bodyguard.Protector.Heroine", "Famous.Heroine",	"Criminal.Heroine",	"Sleuth.Heroine",	"Teacher.Coach.Heroine",	"Warrior.Heroine",	"White.Collar.Heroine",	"Working.Class.Heroine")
+
+Hero = Bookbase %>% 
+  select("Bad.Boys",	"Cruel.Hero.Bully",	"Grumpy.Cold.Hero",	"Himbo",	"Nerdy.Hero",	"Possessive.Hero",	"Shy.Hero",	"Sunny.Happy.Hero",	"Sweet.Gentle.Hero",	"Non.Human.Hero",	"Rich.Hero",	"Single.Father",	"Tortured.Hero",	"Trans.Hero",	"Dad.Bod.Hero",	"Short.King",	"Actor.Hero",	"Athlete.Hero",	"Biker.Hero",	"Bodyguard.Protector.Hero",	"CEO.Tycoon.Hero",	"Cowboy.Hero",	"Fighter.Hero",	"Men.in.Uniform",	"Pirate.Hero",	"Politician.Hero",	"Rockstar.Hero",	"Teacher.Coach.Hero",	"Warlord.Commander.Hero",	"Working.Class.Hero",	"Highlander.Hero",	"Royal.Hero",	"Sheik",	"Viking.Hero")
+
+Content_Warnings = Bookbase %>% 
+  select("No.HEA",	"Nontraditional.HEA",	"Ableism",	"Animal.Abuse",	"Animal.Death",	"Eating.Disorders",	"Fatphobia",	"Gambling",	"Graphic.Violence",	"Human.Trafficking",	"Mental.Illness",	"Mental.Trauma",	"Miscarriage.Infertility",	"Misogyny",	"Queerphobia",	"Racism",	"Religious.Trauma",	"Self.Harm",	"Suicide.Ideation",	"Terminal.Illness",	"Torture.of.MCs",	"Torture.of.Side.Characters",	"Victim.Blaming",	"Abuse",	"Abuse.Between.MCs",	"Third.Party.Abuse",	"Past.Abuse",	"Past.Child.Abuse",	"Past.Child.Neglect",	"Death.Grief",	"Child.Death",	"Substance.Abuse",	"Alcoholism",	"Drug.Abuse")
+
+Format = Bookbase %>% 
+  select("Male.POV",	"Dual.POV",	"First.Person.POV",	"Third.Person.POV")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, class.output="glimpse"}
+Heroine[[13]] <- as.integer(Heroine[[13]])
+Hero[[1]] <- as.integer(Hero[[1]])
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, class.output="glimpse", results="asis"}
+top_tp_tags <- Time_Period %>%
+  summarise(across(everything(), sum, na.rm = TRUE)) %>% 
+  pivot_longer(cols = everything(), names_to = "Tag", values_to = "Count") %>% 
+  arrange(desc(Count)) %>% 
+  slice_head(n = 3) 
+
+top_g_tags <- Genre %>%
+  summarise(across(everything(), sum, na.rm = TRUE)) %>% 
+  pivot_longer(cols = everything(), names_to = "Tag", values_to = "Count") %>% 
+  arrange(desc(Count)) %>% 
+  slice_head(n = 3) 
+
+top_r_tags <- Relationship %>%
+  summarise(across(everything(), sum, na.rm = TRUE)) %>% 
+  pivot_longer(cols = everything(), names_to = "Tag", values_to = "Count") %>% 
+  arrange(desc(Count)) %>% 
+  slice_head(n = 3) 
+
+top_s_tags <- Story %>%
+  summarise(across(everything(), sum, na.rm = TRUE)) %>% 
+  pivot_longer(cols = everything(), names_to = "Tag", values_to = "Count") %>% 
+  arrange(desc(Count)) %>% 
+  slice_head(n = 3) 
+
+top_h_tags <- Heroine %>%
+  summarise(across(everything(), sum, na.rm = TRUE)) %>% 
+  pivot_longer(cols = everything(), names_to = "Tag", values_to = "Count") %>% 
+  arrange(desc(Count)) %>% 
+  slice_head(n = 3) 
+
+top_H_tags <- Hero %>%
+  summarise(across(everything(), sum, na.rm = TRUE)) %>% 
+  pivot_longer(cols = everything(), names_to = "Tag", values_to = "Count") %>% 
+  arrange(desc(Count)) %>% 
+  slice_head(n = 3)
+
+library(dplyr)
+library(tidyr)
+library(kableExtra)
+
+tag_table <- data.frame(
+  Category = character(),
+  Tag_1 = character(),
+  Tag_2 = character(),
+  Tag_3 = character(),
+  stringsAsFactors = FALSE
+)
+
+
+tag_table <- rbind(
+  tag_table,
+  data.frame(
+    Category = "Time_Period",
+    Tag_1 = top_tp_tags$Tag[1],
+    Tag_2 = top_tp_tags$Tag[2],
+    Tag_3 = top_tp_tags$Tag[3]
+  ),
+  data.frame(
+    Category = "Genre",
+    Tag_1 = top_g_tags$Tag[1],
+    Tag_2 = top_g_tags$Tag[2],
+    Tag_3 = top_g_tags$Tag[3]
+  ),
+  data.frame(
+    Category = "Relationship",
+    Tag_1 = top_r_tags$Tag[1],
+    Tag_2 = top_r_tags$Tag[2],
+    Tag_3 = top_r_tags$Tag[3]
+  ),
+  data.frame(
+    Category = "Story",
+    Tag_1 = top_s_tags$Tag[1],
+    Tag_2 = top_s_tags$Tag[2],
+    Tag_3 = top_s_tags$Tag[3]
+  ),
+  data.frame(
+    Category = "Heroine",
+    Tag_1 = top_h_tags$Tag[1],
+    Tag_2 = top_h_tags$Tag[2],
+    Tag_3 = top_h_tags$Tag[3]
+  ),
+  data.frame(
+    Category = "Hero",
+    Tag_1 = top_H_tags$Tag[1],
+    Tag_2 = top_H_tags$Tag[2],
+    Tag_3 = top_H_tags$Tag[3]
+  )
+)
+
+kable(tag_table, format = "html", align = "l", row.names = FALSE, table.attr = 'style="color: black;"') %>%
+  kableExtra::kable_styling(full_width = F, bootstrap_options = c("striped", "hover"))
+```
+
+Just to give you an idea... 😉
+
+# And to put things into perspective...
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, class.output="glimpse", results="asis"}
+df <- data.frame(
+  mostpopulartags = c("Contemporary", "Historical",	"Futuristic",	"Regency", "Victorian", "Fantasy", "Suspense", "Dark.Romance", "Paranormal", "New.Adult", "Enemies.To.Lovers", "Forced.Proximity", "M.F.Romance", "Age.Gap", "Pregnancy", "Abduction", "Disabilities...Scars", "Mafia", "Vengeance", "Military", "Take.Charge.Heroine", "Tortured.Heroine", "Sassy.Heroine", "Competent.Heroine", "Independent.Heroine", "Possessive.Hero", "Tortured.Hero", "Rich.Hero", "Grumpy.Cold.Hero", "Non.Human.Hero"),
+  values = c(8045, 3604, 1607, 1385, 779, 4876, 4038, 4037, 3935, 3034, 4802, 3720, 
+             3311, 2767, 2148, 2370, 1753, 1682, 1393, 1281, 4157, 2471, 2111, 2059, 
+             1870, 5295, 3731, 3067, 2881, 1967),
+  Category = c("Time_Period", "Time_Period", "Time_Period", "Time_Period", "Time_Period", 
+               "Genre", "Genre", "Genre", "Genre", "Genre", 
+               "Relationship", "Relationship", "Relationship", "Relationship", "Story", 
+               "Story", "Story", "Story", "Story", "Story", 
+               "Heroine", "Heroine", "Heroine", "Heroine", "Heroine", 
+               "Hero", "Hero", "Hero", "Hero", "Hero")
+)
+
+
+df$packing <- circleProgressiveLayout(df$values, sizetype='area')
+
+df.gg <- circleLayoutVertices(df$packing, npoints=50)
+
+category_colors <- c(
+  "Time_Period" = "#FF9999", "Genre" = "#FFCC99", 
+  "Relationship" = "#FFFF99", "Story" = "#99FF99",
+  "Heroine" = "#99CCFF", "Hero" = "#CC99FF"
+)
+
+df$Category <- factor(df$Category, levels = c("Time_Period", "Genre", "Relationship", "Story", "Heroine", "Hero"))
+
+ggplot() + 
+  geom_polygon(data = df.gg, aes(x, y, group = id, fill=df$Category[id]), alpha = 0.6)+
+  scale_fill_manual(values = category_colors)+
+  geom_text(data = df, aes(x=packing$x, y=packing$y, label = mostpopulartags), size=2.5, color="black", vjust = -0.5) +
+  geom_text(data = df, aes(x=packing$x, y=packing$y, label = values), size=2.5, color="black", vjust = 1.5) + 
+  theme_void() + 
+  theme_void() + 
+  theme(legend.position="right", plot.margin=unit(c(0,0,0,0),"cm") ) + 
+  coord_equal() +
+  ggtitle("Top 5 Most Popular Tags in Every Category") + 
+  guides(fill = guide_legend(title = "Categories"))
+```
+
+# Just as a final caveat...
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, class.output="glimpse", results="asis"}
+book_timeline <- Bookbase %>%
+  group_by(Release.Year) %>%
+  summarise(Book.Count = n()) %>%
+  arrange(Release.Year)
+
+ggplot(book_timeline, aes(x = Release.Year, y = Book.Count)) +
+  geom_line(color = "#AA336A", size = 1) +
+  labs(
+    title = "Timeline of Books Published",
+    x = "Year",
+    y = "Number of Books Published"
+  ) +
+  theme_minimal() +
+  scale_x_continuous(
+    breaks = seq(min(book_timeline$Release.Year), max(book_timeline$Release.Year), by = 5) 
+  )
+```
+
+# yeah...
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, class.output="glimpse", results="asis"}
+Bookbase[14:345] <- lapply(Bookbase[14:345], function(x) as.integer(as.character(x)))
+
+Bookbase$Total.Tags <- rowSums(Bookbase[, 14:334], na.rm = TRUE)
+
+Bookbase <- Bookbase[is.finite(Bookbase$Total.Tags), ]
+
+ggplot(Bookbase, aes(x = Release.Year, y = Total.Tags)) +
+   geom_text(aes(label = "\u2665"), alpha = 0.6, color = "#AA336A", size = 6, 
+            position = position_jitter(width = 0.2, height = 0)) +
+  labs(
+    title = "Year Published vs Total Tags",
+    x = "Year Published",
+    y = "Total Tags"
+  ) +
+  theme_minimal() +
+  scale_x_continuous(
+    breaks = seq(min(Bookbase$Release.Year, na.rm = TRUE), max(Bookbase$Release.Year, na.rm = TRUE), by = 5)
+  ) +
+  scale_y_continuous(
+    breaks = seq(0, max(Bookbase$Total.Tags, na.rm = TRUE), by = 200)
+  )
+```
+
+# ...girl 💀
+```{r, echo=FALSE, message=FALSE, warning=FALSE, class.output="glimpse", results="asis"}
+Bookbase$Total.Tags <- rowSums(Bookbase[, 14:345], na.rm = TRUE)
+
+max_tags_book <- Bookbase[which.max(Bookbase$Total.Tags), ]
+
+```
+![Fourth Wing](fourthwing.jpg)
+
+# Now for some breakdowns!💗
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, class.output="glimpse", results="asis"}
+
+hero_personality_columns <- c("Bad.Boys", "Cruel.Hero.Bully", "Grumpy.Cold.Hero", "Himbo", "Nerdy.Hero", "Possessive.Hero", "Shy.Hero", "Sunny.Happy.Hero", "Sweet.Gentle.Hero", "Tortured.Hero")
+heroine_personality_columns <- c("Cheerful.Happy.Heroine", "Competent.Heroine", "Female.Rake", "Grumpy.Ice.Queen", "Independent.Heroine", "Sassy.Heroine", "Shy.Heroine", "Sweet.Gentle.Heroine", "Take.Charge.Heroine", "Dangerous.Heroine", "Tortured.Heroine")
+
+Bookbase[hero_personality_columns] <- lapply(Bookbase[hero_personality_columns], as.numeric)
+Bookbase[heroine_personality_columns] <- lapply(Bookbase[heroine_personality_columns], as.numeric)
+
+hero_personality_columns_clean <- gsub("\\.Hero", "", hero_personality_columns)
+heroine_personality_columns_clean <- gsub("\\.Heroine", "", heroine_personality_columns)
+
+hero_personality_columns_clean[hero_personality_columns_clean == "Sunny.Happy"] <- "Cheerful.Happy"
+hero_personality_columns_clean[hero_personality_columns_clean == "Cheerful.Happy"] <- "Cheerful.Happy"
+
+hero_personality_columns_clean <- gsub("Grumpy.Cold.Hero", "Grumpy.Cold", hero_personality_columns_clean)
+heroine_personality_columns_clean <- gsub("Grumpy.Ice.Queen", "Grumpy.Cold", heroine_personality_columns_clean)
+
+hero_ptags <- colSums(Bookbase[hero_personality_columns], na.rm = TRUE)
+hero_pdata <- data.frame(
+  Personality = hero_personality_columns_clean,
+  Count = hero_ptags,
+  Gender = "Hero"
+)
+
+heroine_ptags <- colSums(Bookbase[heroine_personality_columns], na.rm = TRUE)
+heroine_pdata <- data.frame(
+  Personality = heroine_personality_columns_clean,
+  Count = heroine_ptags,
+  Gender = "Heroine"
+)
+
+personality_data <- rbind(hero_pdata, heroine_pdata)
+
+combined_personality_data <- personality_data %>%
+  group_by(Personality) %>%
+  summarise(Count = sum(Count), .groups = 'drop') %>%
+  arrange(desc(Count))
+
+custom_colors <- c(
+  "Cheerful.Happy" = "#F6CBDB",
+  "Grumpy.Cold" = "#AEE5D8",  
+  "Bad.Boys" = "#ADBDFF",    
+  "Cruel.Bully" = "#FCD486",
+  "Himbo" = "#C3F4FD",      
+  "Nerdy" = "#DDEDAA",  
+  "Possessive" = "#C8ADEA",
+  "Shy" = "#A1EED0",      
+  "Sweet.Gentle" = "#F8D1FF",
+  "Tortured" = "#FBC099",
+  "Independent" = "#ABCDB1",   
+  "Sassy" = "#DFE073",    
+  "Take.Charge" = "#9BC2DB",
+  "Competent" = "#FAAAA4",
+  "Dangerous" = "#B9D88F",
+  "Female.Rake" = "#F8D3DC"
+)
+
+ggplot(personality_data, aes(x = Gender, y = Count, fill = Personality)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(
+    title = "Hero and Heroine Personality Tags",
+    x = "Gender",
+    y = "Number of Tags",
+    fill = "Personality"
+  ) +
+  theme_minimal() +
+  scale_fill_manual(values = custom_colors)
+```
+
+# Occupations!💅✨
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, class.output="glimpse", results="asis"}
+hero_occupation_columns <- c("Actor.Hero", "Athlete.Hero", "Bodyguard.Protector.Hero", "CEO.Tycoon.Hero", "Cowboy.Hero","Fighter.Hero", "Pirate.Hero", "Politician.Hero", "Rockstar.Hero", "Teacher.Coach.Hero", "Warlord.Commander.Hero", "Working.Class.Hero", "Royal.Hero", "Sheik")
+heroine_occupation_columns <- c("Aristo.Royal.Heroine", "Athlete.Heroine", "Bodyguard.Protector.Heroine", "Famous.Heroine", 
+"Criminal.Heroine", "Sleuth.Heroine", "Teacher.Coach.Heroine", "Warrior.Heroine", "White.Collar.Heroine", "Working.Class.Heroine")
+
+hero_occupation_columns_clean <- gsub("\\.Hero$", "", hero_occupation_columns)
+heroine_occupation_columns_clean <- gsub("\\.Heroine$", "", heroine_occupation_columns)
+
+hero_occupation_columns_clean[hero_occupation_columns_clean == "Bodyguard.Protector"] <- "Bodyguard.Protector"
+heroine_occupation_columns_clean[heroine_occupation_columns_clean == "Bodyguard.Protector"] <- "Bodyguard.Protector"
+
+hero_occupation_columns_clean[hero_occupation_columns_clean == "Teacher.Coach"] <- "Teacher.Coach"
+heroine_occupation_columns_clean[heroine_occupation_columns_clean == "Teacher.Coach"] <- "Teacher.Coach"
+
+hero_occupation_columns_clean[hero_occupation_columns_clean == "Working.Class"] <- "Working.Class"
+heroine_occupation_columns_clean[heroine_occupation_columns_clean == "Working.Class"] <- "Working.Class"
+
+heroine_occupation_columns_clean[heroine_occupation_columns_clean == "Aristo.Royal"] <- "Royal"
+
+hero_occupation_columns_clean[hero_occupation_columns_clean == "Athlete"] <- "Athlete"
+heroine_occupation_columns_clean[heroine_occupation_columns_clean == "Athlete"] <- "Athlete"
+
+# Compute the tag counts for Hero and Heroine
+hero_tags <- colSums(Bookbase[hero_occupation_columns], na.rm = TRUE)
+hero_data <- data.frame(
+  Occupation = hero_occupation_columns_clean,
+  Count = hero_tags,
+  Gender = "Hero"
+)
+
+heroine_tags <- colSums(Bookbase[heroine_occupation_columns], na.rm = TRUE)
+heroine_data <- data.frame(
+  Occupation = heroine_occupation_columns_clean,
+  Count = heroine_tags,
+  Gender = "Heroine"
+)
+
+occupation_data <- rbind(hero_data, heroine_data)
+
+occupation_data <- occupation_data %>%
+  arrange(desc(Count))
+
+custom_colors_occupation <- c(
+  "Actor" = "#F6CBDB",
+  "Bodyguard.Protector" = "#AEE5D8",  
+  "CEO.Tycoon" = "#ADBDFF",    
+  "Cowboy" = "#FCD486",
+  "Fighter" = "#C3F4FD",      
+  "Pirate" = "#DDEDAA",  
+  "Politician" = "#C8ADEA",
+  "Rockstar" = "#A1EED0", 
+  "Teacher.Coach" = "#F8D1FF",
+  "Warlord.Commander" = "#FBC099",
+  "Working.Class" = "#ABCDB1", 
+  "Royal" = "#FAAAA4",  
+  "Sheik" = "#9BC2DB",
+  "Athlete" = "#B9D88F",
+  "Famous" = "#F8D3DC",
+  "Criminal" = "#A1B9C2",
+  "Sleuth" = "#F8F3B3",
+  "Warrior" = "#FCD5B8",
+  "White.Collar" = "#C1B5C7"
+)
+
+ggplot(occupation_data, aes(x = Gender, y = Count, fill = Occupation)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(
+    title = "Hero and Heroine Occupation Tags",
+    x = "Gender",
+    y = "Number of Tags",
+    fill = "Occupation"
+  ) +
+  theme_minimal() +
+  scale_fill_manual(values = custom_colors_occupation)
+```
+
+# Demographics
+
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, class.output="glimpse", results="asis"}
+demographics_data <- data.frame(
+  Category = c(
+    "Neurodivergent.MC", "Black.MC", "African.American", "East.Asian.MC", 
+    "Indigenous.MC", "Latinx.MC", "South.Asian.Desi", "Southeast.Asian.MC", "Christian", "Jewish", "Muslim", "Pagan", "Trans.Hero"
+  ),
+  Count = c(212, 184, 48, 82, 35, 120, 24, 6, 64, 7, 4, 17, 2),
+  Group = c(
+    "Neurodivergence", "Ethnicity", "Ethnicity", "Ethnicity", 
+    "Ethnicity", "Ethnicity", "Ethnicity", "Ethnicity",
+    "Religion", "Religion", "Religion", "Religion", "Gender Identity"
+  )
+)
+
+custom_colors <- c(
+  "Neurodivergent.MC" = "#F6CBDB",
+  "Black.MC" = "#AEE5D8", 
+  "African.American" = "#ADBDFF",  
+  "East.Asian.MC" = "#FCD486",
+  "Indigenous.MC" = "#C3F4FD", 
+  "Latinx.MC" = "#DDEDAA", 
+  "South.Asian.Desi" = "#C8ADEA",
+  "Southeast.Asian.MC" = "#A1EED0", 
+  "Christian" = "#F8D1FF",
+  "Jewish" = "#FBC099",
+  "Muslim" = "#ABCDB1", 
+  "Pagan" = "#FAAAA4",
+  "Trans.Hero" = "#9BC2DB"
+)
+
+ggplot(demographics_data, aes(x = Group, y = Count, fill = Category)) +
+  geom_bar(stat = "identity", position = "stack") +
+  labs(
+    title = "Demographics Breakdown",
+    caption = "(MC = Main Character)",
+    x = "Category",
+    y = "Count",
+    fill = "Demographic"
+  ) +
+  theme_minimal() +
+  scale_fill_manual(values = custom_colors)
+```
+
+#### MIA Tags: Trans Heroine, Hindu, Buddhist, Amish
+
+# Drama Around the World! 
+```{r, echo=FALSE, message=FALSE, warning=FALSE, class.output="glimpse", results="asis"}
+library(ggplot2)
+library(sf)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(dplyr)
+
+# Sample data: Replace with your actual data
+country_data <- data.frame(
+  Country = c("Morocco", "Djibouti", "Somalia", "Israel", "Jordan", "Palestine", "Bahamas", "Jamaica", "Costa Rica", "Canada", "Mexico", "United States of America", "Argentina", "Colombia", "Peru", "Ireland", "United Kingdom", "Scotland", "Wales", "Belgium", "France", "Germany", "Hungary", "Netherlands", "Switzerland", "Norway", "Sweden", "Italy", "Spain", "Greece", "Kosovo", "Romania", "Serbia", "Belarus", "Russia", "Australia", "New Zealand"),
+  Count = c(1, 6, 5, 5, 2, 7, 6, 6, 7, 54, 5, 538, 3, 1, 1, 5, 242, 85, 6, 1, 32, 5, 2, 1, 1, 1, 6, 12, 7, 2, 1, 4, 2, 1, 8, 2, 2)
+)
+
+# Load world map
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+# Merge map data with your dataset
+world_data <- world %>%
+  left_join(country_data, by = c("name" = "Country"))
+
+# Plot heatmap
+ggplot(world_data) +
+  geom_sf(aes(fill = Count), color = "white", size = 0.2) +
+  scale_fill_gradient(
+    low = "lightpink", 
+    high = "deeppink", 
+    na.value = "lightgrey", 
+    name = "Tag Count",
+    limits = c(min(country_data$Count, na.rm = TRUE), max(country_data$Count, na.rm = TRUE))
+  ) +
+  coord_sf() +
+  theme_minimal() +
+  theme(aspect.ratio = 0.55) +
+  labs(
+    title = "Tag Counts by Country",
+    caption = "Top Country Tag: USA (538)"
+  )
+```
+
+# But really, it's *just* in the US... 👀🤷‍♀️
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, class.output="glimpse", results="asis"}
+library(ggplot2)
+library(dplyr)
+library(usmap)
+
+# Sample data: Replace with your actual data
+state_data <- data.frame(
+  State = c("Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming", "District of Columbia"),
+  Count = c(0, 16, 11, 1, 62, 20, 3, 0, 36, 2, 6, 4, 50, 0, 0, 5, 2, 24, 14, 9, 42, 6, 19, 0, 3, 12, 5, 19, 5, 3, 2, 76, 8, 0, 5, 0, 8, 14, 3, 4, 0, 6, 29, 3, 2, 23, 11, 0, 3, 13, 14)
+)
+
+
+state_data$State <- tolower(state_data$State)
+
+us_states <- map_data("state")
+
+# Merge the map data with your dataset
+us_map_data <- us_states %>%
+  left_join(state_data, by = c("region" = "State"))
+
+# Plot the heatmap
+ggplot(us_map_data) +
+  geom_polygon(aes(x = long, y = lat, group = group, fill = Count), 
+               color = "white", size = 0.2) +
+  scale_fill_gradient(
+    low = "lightpink", 
+    high = "deeppink", 
+    na.value = "lightgrey", 
+    name = "Tag Count",
+    limits = c(min(state_data$Count, na.rm = TRUE), max(state_data$Count, na.rm = TRUE))
+  ) +
+  coord_fixed(1.3) +  # Keeps aspect ratio for the map
+  theme_minimal() +
+  labs(
+    title = "Tag Counts by U.S. State",
+    caption = "Top State Tag: USA (76)"
+  )
+```
+
+# Trope-topolis 💕💖💗💘💝
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, class.output="glimpse", results="asis"}
+relationship_tags <- data.frame(
+  Tag = c("Older/Mature", "Childfree", "Queer Awakening", "Age Gap", "Boss/Employee", "Class Difference", "Grumpy/Sunshine", "Height Difference", "Aranged/Forced Marriage", "Caretaking", "Enemies to Lovers", "Fake Relationship", "Fated Mates", "Forbidden Love", "Forced Proximity", "Friends to Lovers", "Good Grovel", "Hurt/Comfort", "Insta-Love", "Marriage of Convenience", "Love Triangle", "Cheating", "Pregnancy", "Second Chances", "Secret Child", "Secret Relationship", "Sibling's Best Friend", "Slow Burn"),
+  Count = c(93, 303, 28, 2767, 733, 1429, 1795, 1804, 1872, 945, 4802, 625, 1402, 2065, 3720, 2024, 172, 746, 1886, 1868, 582, 337, 2148, 743, 222, 729, 67, 1955)
+)
+
+# Reorder tags from least to most tagged
+relationship_tags <- relationship_tags %>%
+  arrange(Count)
+
+ggplot(relationship_tags, aes(x = reorder(Tag, Count), y = Count)) +
+  geom_col(fill = "#AA336A", width = 0.7) + # Dark pink bars
+  coord_flip() + # Flip the axes
+  theme_minimal() +
+  labs(
+    title = "Relationship Tags Histogram",
+    caption = "Top Trope Tag: Enemies to Lovers (4802)",
+    x = "Tag",
+    y = "Count"
+  ) +
+  theme(
+    axis.title.x = element_text(size = 14, face = "bold"),
+    axis.title.y = element_text(size = 14, face = "bold"),
+    axis.text = element_text(size = 12)
+  )
+```
+
+# Comparatively...👁️👁️
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, class.output="glimpse", results="asis"}
+tropes_data <- data.frame(
+  Tag = c("Older/Mature", "Childfree", "Queer Awakening", "Age Gap", "Boss/Employee", "Class Difference", "Grumpy/Sunshine", "Height Difference", "Aranged/Forced Marriage", "Caretaking", "Enemies to Lovers", "Fake Relationship", "Fated Mates", "Forbidden Love", "Forced Proximity", "Friends to Lovers", "Good Grovel", "Hurt/Comfort", "Insta-Love", "Marriage of Convenience", "Love Triangle", "Cheating", "Pregnancy", "Second Chances", "Secret Child", "Secret Relationship", "Sibling's Best Friend", "Slow Burn"),
+  Count = c(0, 5, 0, 71, 35, 46, 53, 35, 10, 20, 49, 6, 34, 59, 70, 30, 0, 21, 25, 1, 0, 0, 12, 0, 0, 27, 0, 14)  # Example counts
+)
+
+# Plot the histogram for the manually input tropes data
+ggplot(tropes_data, aes(x = reorder(Tag, Count), y = Count)) +
+  geom_col(fill = "#D81B60", width = 0.7) +  # Dark pink bars
+  coord_flip() +  # Flip the axes
+  theme_minimal() +
+  labs(
+    title = "MY Taste in Book Tropes",
+    caption = "Top Trope Tag: Age Gap (71)",
+    x = "Trope",
+    y = "Count"
+  ) +
+  theme(
+    axis.title.x = element_text(size = 14, face = "bold"),
+    axis.title.y = element_text(size = 14, face = "bold"),
+    axis.text = element_text(size = 12)
+  ) +
+  theme(panel.grid.major = element_blank())
+```
+
+# Timeline of books
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, class.output="glimpse", results="asis"}
+
+Bookbase_read <- data.frame(
+  Title = c("Under Her Skin", "Beyond the Next Star", "Tame the Heart", "Twisted Games", "Beyond the Faerie Gate", "Across an Endless Sea", "Amidst the Insidious Courts", "Redacted 1", "Beneath a Shattered Sky", "Between Love and Loathing", "Monsters", "Dearest Rogue", "Redacted 2", "The Wraith King", "Forbidden: Part One"),
+  Date.Started = as.Date(c("2024-03-18", "2024-03-21", "2024-05-20", "2024-06-20", "2024-07-04", "2024-07-07", "2024-07-12", "2024-07-19", "2024-07-23", "2024-08-05", "2024-09-01", "2024-09-08", "2024-09-16", "2024-09-28", "2024-10-19")),
+  Date.Finished = as.Date(c("2024-03-21", "2024-03-25", "2024-06-20", "2024-07-04", "2024-07-07", "2024-07-12", "2024-07-18", "2024-07-21", "2024-08-05", "2024-08-31", "2024-09-08", "2024-09-16", "2024-09-26", "2024-10-18", "2024-11-04"))
+)
+
+Bookbase_read <- Bookbase_read %>%
+  arrange(desc(Date.Finished)) %>%
+  mutate(Title = factor(Title, levels = Title))  # Ensure the books are ordered by most recent
+
+ggplot(Bookbase_read, aes(y = Title)) +
+  geom_segment(aes(x = Date.Started, xend = Date.Finished, y = Title, yend = Title), size = 2, color = "#AA336A") +
+  labs(
+    title = "Reading Timeline",
+    x = "Date",
+    y = "Book"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 10),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  ) +
+  scale_y_discrete(limits = rev(levels(Bookbase_read$Title)))
+```
+
+# In Summary.. I Have Bad Taste 😛
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, class.output="glimpse", results="asis"}
+Bookbase <- data.frame(
+  Title = c("Under Her Skin", "Beyond the Next Star", "Tame the Heart", "Twisted Games", "Beyond the Faerie Gate", "Across an Endless Sea", "Amidst the Insidious Courts", "Redacted 1", "Beneath a Shattered Sky", "Between Love and Loathing", "Monsters", "Dearest Rogue", "Redacted 2", "The Wraith King", "Forbidden: Part One"),
+  Rating = c(2.5, 3, 4, 3.5, 3.5, 3.5, 3.5, 1.5, 4, 2.5, 1.5, 4, 2.5, 4.5, 3.5)
+)
+
+# Create a pink bar graph based on ratings
+ggplot(Bookbase, aes(x = reorder(Title, Rating), y = Rating)) +
+  geom_bar(stat = "identity", fill = "#AA336A") +  # Removed black border
+  coord_flip() +  # Flip the axes so bars are horizontal
+  labs(
+    title = "Book Ratings",
+    x = "Book Title",
+    y = "Rating"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 10),  # Adjust size of the book titles
+    axis.text.x = element_text(size = 10),  # Adjust size of the ratings
+    axis.title = element_text(size = 12),  # Adjust title size
+    plot.title = element_text(size = 14, face = "bold")
+  )
+```
+
